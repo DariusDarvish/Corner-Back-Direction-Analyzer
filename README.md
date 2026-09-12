@@ -1,90 +1,53 @@
 # NFL Cover 2 Cornerback Analyzer
 
-An Electron + TypeScript desktop app for examining cornerback movement in the tracking files in `NFL_DATA`.
+This project is an Electron + TypeScript desktop app for analyzing cornerback movement in the provided `NFL_DATA` tracking files.
 
-## Start the app
+It focuses on one question: how do cornerbacks accelerate and move at speed when their orientation and movement direction line up in a specific cardinal direction?
+
+## What the app analyzes
+
+The app uses the supplied tracking windows to evaluate cornerback movement by direction:
+
+- North: `315–45`
+- East: `46–134`
+- South: `135–224`
+- West: `225–314`
+
+For each player, the app:
+
+1. Checks only frames where the player's orientation (`o`) and movement direction (`dir`) match the same cardinal direction.
+2. Builds a running total of cumulative Euclidean travel from `x`/`y`.
+3. Treats a qualifying run as a sequence with at least 5 yards of travel.
+4. Averages acceleration (`a`) for the first 0–5 yards of each qualifying run.
+5. Averages speed (`s`) from 6 yards onward while the same direction remains active.
+
+The app then aggregates those measurements by player, team, and direction so you can compare cornerbacks in different movement directions.
+
+## Run the app
+
+1. Make sure the `NFL_DATA` folder is present in the project root.
+2. Install dependencies:
 
 ```bash
 npm install
+```
+
+3. Start the app:
+
+```bash
 npm start
 ```
 
-The first analysis can take a little time because `NFL_DATA` is approximately 824 MB. Select a defensive team and/or type a cornerback's name, then choose **Apply**.
+The app will build the TypeScript sources and open the Electron window.
 
-### Direction analysis
+## Use the app
 
-The app implements these ranges exactly: North `315–45` (wrapping through 0), East `46–134`, South `135–224`, and West `225–314`. It accepts a frame only when the player's orientation (`o`) and movement direction (`dir`) land in the same range. It then:
+From the interface, you can:
 
-1. Uses cumulative Euclidean travel from `x`/`y` to find runs of at least 5 yards.
-2. Averages acceleration (`a`) over yards 0–5 of each qualifying run.
-3. Averages speed (`s`) from yard 6 onward, while the orientation/direction still match that cardinal direction.
+- filter by defensive team
+- filter by player name
+- filter by direction
+- view how many qualifying runs were used for each result
+- review average acceleration and average speed for each cornerback direction combination
 
-The data does not include `ball_snap` or `pass_forward` event labels. The full supplied input window is therefore used as a snap-to-pass-forward proxy.
-
-### Reusable analyzer component
-
-The movement calculation is a reusable TypeScript module at `src/components/cornerback-direction-analyzer.ts`, rather than being embedded in the Electron window. Call it from Electron's main process, another Node service, or a test:
-
-```ts
-import { analyzeCornerbackDirections } from './components/cornerback-direction-analyzer';
-
-const report = analyzeCornerbackDirections({
-  dataRoot: '/absolute/path/to/NFL_DATA',
-  teams: ['KC'],
-  playerNames: ['LJarius Sneed'],
-  directions: ['North', 'West'],
-  minimumDistanceYards: 5,
-  speedStartDistanceYards: 6,
-});
-```
-
-All filters are optional. The Electron bridge accepts the same parameters except `dataRoot`, which is fixed to this project's `NFL_DATA` folder for safety.
-
-## CSV to JSON converter
-
-The converter processes one file at a time, so it does not load the entire data set into memory. It creates a standard JSON array for every source CSV and preserves the source folder structure.
-
-### Test the converter with one small file
-
-This is the recommended first test. It converts only the play metadata CSV, writes output to a temporary location, and leaves `NFL_DATA` unchanged.
-
-```bash
-npm run convert:data -- \
-  --source NFL_DATA/supplementary_data.csv \
-  --output /private/tmp/nfl-json-test
-```
-
-Confirm the result is valid JSON and inspect the first record:
-
-```bash
-node -e "const x=require('/private/tmp/nfl-json-test/supplementary_data.json'); console.log(x.length, x[0])"
-```
-
-Expected result: `18009` records, followed by the first play object.
-
-### Convert every NFL CSV file
-
-```bash
-npm run convert:data
-```
-
-This writes files beneath `NFL_DATA_JSON/`. For example:
-
-```text
-NFL_DATA/supplementary_data.csv       → NFL_DATA_JSON/supplementary_data.json
-NFL_DATA/train/input_2023_w01.csv     → NFL_DATA_JSON/train/input_2023_w01.json
-```
-
-The full export is large and can take time; make sure you have several GB of free disk space before running it.
-
-### Use a different source or destination
-
-```bash
-npm run convert:data -- --source path/to/csv-or-folder --output path/to/json-output
-```
-
-When `--source` is a single CSV, its JSON file is placed directly inside the output folder. When the source is a folder, its nested layout is retained.
-
-## Measurement definition
-
-The supplied input tracking data has no explicit snap event. The app therefore uses a defensive CB's first available tracking frame as the initial position. It normalizes movement for the offense's play direction, measures depth as movement away from the line of scrimmage, and defines “settled” as the first point at 90% or more of the player's maximum depth followed by three frames at 0.75 yd/s or slower. Tracking frames are treated as 10 Hz.
+The app is designed specifically for understanding cornerback acceleration and speed in defined directions, not for general NFL data conversion or unrelated analytics.
