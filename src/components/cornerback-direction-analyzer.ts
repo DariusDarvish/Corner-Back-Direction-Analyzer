@@ -20,6 +20,8 @@ export type CornerbackDirectionResult = {
   qualifyingRuns: number;
   averageAcceleration: number;
   averageSpeedAfterFive: number | null;
+  averageDeceleration: number | null;
+  score: number;
   accelerationSamples: number;
   speedSamples: number;
 };
@@ -105,13 +107,18 @@ export function analyzeCornerbackDirections(
       tracks.set(key, [...(tracks.get(key) ?? []), row]);
     }
   }
-  type Total = CornerbackDirectionResult & { acceleration: number[]; speed: number[] };
+  type Total = CornerbackDirectionResult & {
+    acceleration: number[];
+    speed: number[];
+    deceleration: number[];
+  };
   const totals = new Map<string, Total>();
   const store = (
     rows: Row[],
     direction: CardinalDirection,
     acceleration: number[],
     speed: number[],
+    deceleration: number[],
   ): void => {
     if (!acceleration.length || (allowedDirections && !allowedDirections.has(direction))) return;
     const first = rows[0];
@@ -124,14 +131,18 @@ export function analyzeCornerbackDirections(
       qualifyingRuns: 0,
       averageAcceleration: 0,
       averageSpeedAfterFive: null,
+      averageDeceleration: null,
+      score: 0,
       accelerationSamples: 0,
       speedSamples: 0,
       acceleration: [],
       speed: [],
+      deceleration: [],
     };
     total.qualifyingRuns += 1;
     total.acceleration.push(...acceleration);
     total.speed.push(...speed);
+    total.deceleration.push(...deceleration);
     totals.set(key, total);
   };
   for (const rows of tracks.values()) {
@@ -140,14 +151,16 @@ export function analyzeCornerbackDirections(
       run: Row[] = [],
       distance = 0,
       acceleration: number[] = [],
-      speed: number[] = [];
+      speed: number[] = [],
+      deceleration: number[] = [];
     const endRun = (): void => {
-      if (active && distance >= minimumDistance) store(run, active, acceleration, speed);
+      if (active && distance >= minimumDistance) store(run, active, acceleration, speed, deceleration);
       active = null;
       run = [];
       distance = 0;
       acceleration = [];
       speed = [];
+      deceleration = [];
     };
     for (const row of rows) {
       const orientation = cardinalDirection(value(row.o));
@@ -164,24 +177,50 @@ export function analyzeCornerbackDirections(
         continue;
       }
       const previous = run[run.length - 1];
+      const currentAcceleration = value(row.a);
       distance += Math.hypot(value(row.x) - value(previous.x), value(row.y) - value(previous.y));
       run.push(row);
-      if (distance <= minimumDistance) acceleration.push(value(row.a));
+      if (distance <= minimumDistance) acceleration.push(currentAcceleration);
       if (distance >= speedStart) speed.push(value(row.s));
+      if (distance >= 3 && currentAcceleration < 0) deceleration.push(Math.abs(currentAcceleration));
     }
     endRun();
   }
-  const results = [...totals.values()].map(({ acceleration, speed, ...total }) => ({
+  const results = [...totals.values()].map(({ acceleration, speed, deceleration, ...total }) => ({
     ...total,
     averageAcceleration: acceleration.reduce((sum, item) => sum + item, 0) / acceleration.length,
     averageSpeedAfterFive: speed.length ? speed.reduce((sum, item) => sum + item, 0) / speed.length : null,
+    averageDeceleration: deceleration.length
+      ? deceleration.reduce((sum, item) => sum + item, 0) / deceleration.length
+      : null,
+    score: 0,
     accelerationSamples: acceleration.length,
     speedSamples: speed.length,
   }));
+
+  const maxDeceleration = Math.max(0, ...results.map((result) => result.averageDeceleration ?? 0));
+  const maxSpeed = Math.max(0, ...results.map((result) => result.averageSpeedAfterFive ?? 0));
+
+  const scoredResults = results.map((result) => {
+    const decelerationScore =
+      maxDeceleration > 0 && result.averageDeceleration != null
+        ? Math.min(100, (result.averageDeceleration / maxDeceleration) * 100)
+        : 0;
+    const speedScore =
+      maxSpeed > 0 && result.averageSpeedAfterFive != null
+        ? Math.min(100, (result.averageSpeedAfterFive / maxSpeed) * 100)
+        : 0;
+
+    return {
+      ...result,
+      score: Math.min(100, Math.max(0, Math.round((decelerationScore + speedScore) / 2))),
+    };
+  });
+
   return {
-    results,
-    players: [...new Set(results.map((result) => result.player))].sort(),
-    teams: [...new Set(results.map((result) => result.team))].sort(),
+    results: scoredResults,
+    players: [...new Set(scoredResults.map((result) => result.player))].sort(),
+    teams: [...new Set(scoredResults.map((result) => result.team))].sort(),
     source: `${tracks.size.toLocaleString()} CB input windows scanned`,
   };
 }

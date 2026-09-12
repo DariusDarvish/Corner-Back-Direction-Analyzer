@@ -2,7 +2,7 @@
 
 This project is an Electron + TypeScript desktop app for analyzing cornerback movement in the provided `NFL_DATA` tracking files.
 
-It focuses on one question: how do cornerbacks accelerate and move at speed when their orientation and movement direction line up in a specific cardinal direction?
+It focuses on one question: how do cornerbacks accelerate, de-accelerate, and maintain speed when their orientation and movement direction line up in a specific cardinal direction.
 
 ## What the app analyzes
 
@@ -19,7 +19,9 @@ For each player, the app:
 2. Builds a running total of cumulative Euclidean travel from `x`/`y`.
 3. Treats a qualifying run as a sequence with at least 5 yards of travel.
 4. Averages acceleration (`a`) for the first 0–5 yards of each qualifying run.
-5. Averages speed (`s`) from 6 yards onward while the same direction remains active.
+5. Tracks de-acceleration after the player has moved at least 3 yards in that direction, measuring how quickly their speed drops.
+6. Averages speed (`s`) from 6 yards onward while the same direction remains active.
+7. Assigns each player a score from `0–100` based on how strongly they de-accelerate and how much speed they maintain in that direction.
 
 The app then aggregates those measurements by player, team, and direction so you can compare cornerbacks in different movement directions.
 
@@ -48,6 +50,6 @@ From the interface, you can:
 - filter by player name
 - filter by direction
 - view how many qualifying runs were used for each result
-- review average acceleration and average speed for each cornerback direction combination
+- review average acceleration, average speed, and the new `0–100` score for each cornerback direction combination
 
-The app is designed specifically for understanding cornerback acceleration and speed in defined directions, not for general NFL data conversion or unrelated analytics.
+The app is designed specifically for understanding cornerback acceleration, de-acceleration, and speed in defined directions, not for general NFL data conversion or unrelated analytics.

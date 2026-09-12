@@ -5,6 +5,8 @@ export type DirectionResult = {
   qualifyingRuns: number;
   averageAcceleration: number;
   averageSpeedAfterFive: number | null;
+  averageDeceleration: number | null;
+  score: number;
   accelerationSamples: number;
   speedSamples: number;
 };
