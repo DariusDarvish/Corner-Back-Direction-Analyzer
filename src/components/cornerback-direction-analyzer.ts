@@ -211,9 +211,14 @@ export function analyzeCornerbackDirections(
         ? Math.min(100, (result.averageSpeedAfterFive / maxSpeed) * 100)
         : 0;
 
+    const lowSpeedPenalty = speedScore < 60 ? ((60 - speedScore) / 60) * 35 : 0;
+
     return {
       ...result,
-      score: Math.min(100, Math.max(0, Math.round((decelerationScore + speedScore) / 2))),
+      score: Math.min(
+        100,
+        Math.max(0, Math.round(speedScore * 0.75 + decelerationScore * 0.25 - lowSpeedPenalty)),
+      ),
     };
   });
 
