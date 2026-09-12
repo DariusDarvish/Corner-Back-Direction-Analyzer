@@ -1,4 +1,4 @@
-# NFL Cover 2 Cornerback Analyzer
+# NFL Cornerback accelerate and move at speed Analyzer
 
 This project is an Electron + TypeScript desktop app for analyzing cornerback movement in the provided `NFL_DATA` tracking files.
 
