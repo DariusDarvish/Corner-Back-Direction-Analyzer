@@ -1,0 +1,8 @@
+node_modules/
+dist/
+NFL_DATA/
+NFL_DATA_JSON/
+*.csv
+*.json
+!package.json
+!package-lock.json

@@ -1,0 +1,29 @@
+{
+  "name": "football-projects",
+  "version": "1.0.0",
+  "description": "",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "dist/electron-main.js",
+  "scripts": {
+    "build": "tsc && tsc -p tsconfig.renderer.json && tailwindcss -i src/styles/tailwind.css -o dist/movement.css",
+    "convert:data": "npm run build && node dist/convert-csv.js",
+    "format": "prettier --write \"{src,*.{html,md,json}}/**/*\" \"*.{html,md,json}\"",
+    "format:check": "prettier --check \"{src,*.{html,md,json}}/**/*\" \"*.{html,md,json}\"",
+    "start": "npm run build && electron .",
+    "dev": "npm run build && electron .",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "@types/node": "^24.0.0",
+    "electron": "^44.3.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.3"
+  },
+  "dependencies": {
+    "@tanstack/table-core": "^9.2.4",
+    "tailwindcss": "^4.3.3"
+  }
+}

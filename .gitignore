@@ -1,0 +1,5 @@
+node_modules/
+dist/
+NFL_DATA/
+.DS_Store
+*.log

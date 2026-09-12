@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CB Direction Analysis</title>
+    <link rel="stylesheet" href="./dist/movement.css" />
+  </head>
+  <body>
+    <main
+      class="min-h-screen bg-[radial-gradient(circle_at_90%_0%,#16436c,transparent_38%),#071427] px-4 py-9 text-slate-100 sm:px-8"
+    >
+      <div class="mx-auto max-w-6xl">
+        <div class="text-xs font-extrabold uppercase tracking-[.12em] text-cyan-300">
+          NFL_DATA · post-snap proxy analysis
+        </div>
+        <h1 class="my-3 text-4xl font-extrabold tracking-tight sm:text-6xl">CB movement by direction</h1>
+        <p class="max-w-3xl leading-relaxed text-slate-300">
+          Only frames where orientation and travel direction fall in the same cardinal range are included. A
+          run qualifies after 5 yards of cumulative x/y travel.
+        </p>
+
+        <section id="filters" class="my-7 flex flex-wrap gap-3" aria-label="Analysis filters"></section>
+
+        <section id="analysis-output" hidden>
+          <div id="direction-chart" class="my-7 grid gap-4 md:grid-cols-2 xl:grid-cols-4"></div>
+          <div
+            id="results-table"
+            class="overflow-auto rounded-xl border border-sky-200/15 bg-slate-900/80"
+          ></div>
+        </section>
+
+        <p
+          class="mt-6 rounded-r-lg border-l-4 border-cyan-300 bg-slate-900/80 p-4 text-sm leading-relaxed text-slate-300"
+        >
+          <strong>Event proxies:</strong> these files have no <code>ball_snap</code> or
+          <code>pass_forward</code>
+          event columns. Each input window is treated as snap → pass-forward.
+        </p>
+      </div>
+    </main>
+    <script type="module" src="./dist/renderer/movement-app.js"></script>
+  </body>
+</html>
