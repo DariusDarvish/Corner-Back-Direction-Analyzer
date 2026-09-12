@@ -28,6 +28,21 @@ export type CornerbackDirectionResult = {
 
 export type CornerbackDirectionAnalysis = {
   results: CornerbackDirectionResult[];
+  directionAnimations: {
+    direction: CardinalDirection;
+    player: string;
+    team: string;
+    frameCount: number;
+    frames: {
+      frameId: string;
+      x: number;
+      y: number;
+      o: number;
+      dir: number;
+      speed: number;
+      acceleration: number;
+    }[];
+  }[];
   players: string[];
   teams: string[];
   source: string;
@@ -112,13 +127,30 @@ export function analyzeCornerbackDirections(
     speed: number[];
     deceleration: number[];
   };
+  type DirectionAnimationRun = {
+    direction: CardinalDirection;
+    player: string;
+    team: string;
+    frameCount: number;
+    frames: {
+      frameId: string;
+      x: number;
+      y: number;
+      o: number;
+      dir: number;
+      speed: number;
+      acceleration: number;
+    }[];
+  };
   const totals = new Map<string, Total>();
+  const bestRunsByDirection = new Map<string, DirectionAnimationRun>();
   const store = (
     rows: Row[],
     direction: CardinalDirection,
     acceleration: number[],
     speed: number[],
     deceleration: number[],
+    run: Row[],
   ): void => {
     if (!acceleration.length || (allowedDirections && !allowedDirections.has(direction))) return;
     const first = rows[0];
@@ -144,6 +176,26 @@ export function analyzeCornerbackDirections(
     total.speed.push(...speed);
     total.deceleration.push(...deceleration);
     totals.set(key, total);
+
+    const runFrames = run.map((frame) => ({
+      frameId: frame.frame_id,
+      x: value(frame.x),
+      y: value(frame.y),
+      o: value(frame.o),
+      dir: value(frame.dir),
+      speed: value(frame.s),
+      acceleration: value(frame.a),
+    }));
+    const currentBest = bestRunsByDirection.get(direction);
+    if (!currentBest || runFrames.length > currentBest.frameCount) {
+      bestRunsByDirection.set(direction, {
+        direction,
+        player: first.player_name,
+        team,
+        frameCount: runFrames.length,
+        frames: runFrames,
+      });
+    }
   };
   for (const rows of tracks.values()) {
     rows.sort((a, b) => value(a.frame_id) - value(b.frame_id));
@@ -154,7 +206,9 @@ export function analyzeCornerbackDirections(
       speed: number[] = [],
       deceleration: number[] = [];
     const endRun = (): void => {
-      if (active && distance >= minimumDistance) store(run, active, acceleration, speed, deceleration);
+      if (active && distance >= minimumDistance) {
+        store(rows, active, acceleration, speed, deceleration, run);
+      }
       active = null;
       run = [];
       distance = 0;
@@ -222,8 +276,13 @@ export function analyzeCornerbackDirections(
     };
   });
 
+  const directionAnimations = (['North', 'East', 'South', 'West'] as CardinalDirection[])
+    .map((direction) => bestRunsByDirection.get(direction))
+    .filter((animation): animation is DirectionAnimationRun => animation != null);
+
   return {
     results: scoredResults,
+    directionAnimations,
     players: [...new Set(scoredResults.map((result) => result.player))].sort(),
     teams: [...new Set(scoredResults.map((result) => result.team))].sort(),
     source: `${tracks.size.toLocaleString()} CB input windows scanned`,

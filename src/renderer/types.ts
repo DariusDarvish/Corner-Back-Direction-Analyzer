@@ -1,3 +1,21 @@
+export type DirectionAnimationFrame = {
+  frameId: string;
+  x: number;
+  y: number;
+  o: number;
+  dir: number;
+  speed: number;
+  acceleration: number;
+};
+
+export type DirectionAnimation = {
+  direction: string;
+  player: string;
+  team: string;
+  frameCount: number;
+  frames: DirectionAnimationFrame[];
+};
+
 export type DirectionResult = {
   player: string;
   team: string;
@@ -13,6 +31,7 @@ export type DirectionResult = {
 
 export type MovementAnalysis = {
   results: DirectionResult[];
+  directionAnimations: DirectionAnimation[];
   players: string[];
   teams: string[];
   source: string;

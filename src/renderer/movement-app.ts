@@ -1,4 +1,5 @@
 import { createFilters } from './components/filters.js';
+import { renderDirectionAnimations } from './components/direction-animations.js';
 import { renderDirectionChart } from './components/direction-chart.js';
 import { renderResultsTable } from './components/results-table.js';
 import type { Filters, MovementAnalysis } from './types.js';
@@ -6,6 +7,7 @@ import type { Filters, MovementAnalysis } from './types.js';
 const output = document.querySelector<HTMLElement>('#analysis-output')!;
 const chart = document.querySelector<HTMLElement>('#direction-chart')!;
 const table = document.querySelector<HTMLElement>('#results-table')!;
+const animations = document.querySelector<HTMLElement>('#direction-animations')!;
 
 function filterResults(data: MovementAnalysis, filters: Filters) {
   const player = filters.player.toLowerCase();
@@ -20,6 +22,7 @@ async function start(): Promise<void> {
     const rows = filterResults(data, filters);
     output.hidden = false;
     renderDirectionChart(chart, rows);
+    renderDirectionAnimations(animations, data.directionAnimations, filters);
     renderResultsTable(table, rows);
   };
   createFilters(document.querySelector<HTMLElement>('#filters')!, {
